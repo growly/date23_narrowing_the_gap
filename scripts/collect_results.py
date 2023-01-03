@@ -10,7 +10,7 @@ import sys
 import functools
 import operator
 
-import matplotlib
+#import matplotlib
 #matplotlib.use('gtk3agg')
 #
 from matplotlib.backends.backend_pdf import PdfPages
@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 TEST_DIR_RE = re.compile(
-    r'tab_(vivado|yosys|yosys-abc[^_]*)_([a-zA-Z0-9_.]+)_([a-zA-Z0-9]+)_([a-zA-Z0-9]+)')
+    r'tab_(vivado|yosys|yosys-abc9)_([a-zA-Z0-9_.]+)_([a-zA-Z0-9]+)_([a-zA-Z0-9]+)')
 TEST_RESULT_FILE_RE = re.compile(r'test_(\d+).txt')
 TEST_LOG_FILE_RE = re.compile(r'test_(\d+)\.log')
 YOSYS_LOG_FILE_RE = re.compile(r'yosys\.log')
@@ -104,13 +104,6 @@ class RegexResult:
 
 
 class UtilizationResult(RegexResult):
-    # Updated for new Vivado version (2021.2)
-    # | Slice LUTs                 |  517 |     0 |        800 |    133800 |  0.39 |
-    # |   LUT as Logic             |  516 |     0 |        800 |    133800 |  0.39 |
-    def Match5ColumnRow(label):
-        spec = (r'^\|\s+(' + label +
-                r')\s+\|\s+(\d+)?\s+\|\s+(\d+)?\s+\|\s+(\d+)?\s+\|\s+(\d+)?\s+\|\s+(<?\d+.\d+)?\s+\|$')
-        return re.compile(spec)
     ## | CLB LUTs                   | 4455 |     0 |    203128 |  2.19 |
     ## | Bonded IOB       |  366 |     0 |       520 | 70.38 |
     @staticmethod
@@ -135,7 +128,7 @@ class UtilizationResult(RegexResult):
 
     def __init__(self):
         super().__init__(UtilizationResult.LABELS,
-                         UtilizationResult.Match5ColumnRow)
+                         UtilizationResult.Match4ColumnRow)
 
 
 class RuntimeResult(RegexResult):

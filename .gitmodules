@@ -1,3 +1,0 @@
-[submodule "yosys"]
-	path = yosys
-	url = git@github.com:YosysHQ/yosys-bench.git

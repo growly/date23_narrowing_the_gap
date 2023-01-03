@@ -9,14 +9,18 @@
 input=
 dev="xc7a200"
 grade=1
-speed=5000  # picoseconds
+speed=30000  # picoseconds
 synth="yosys" # yosys | yosys-abc9 | vivado
 clean=false
+YOSYS=${YOSYS:-/users/bbarzen/workspace/yosys/yosys}
 
 while [ "$1" != "" ]; do
   case $1 in
     -i | --input )          shift
                             input="$1"
+                            ;;
+    -yp | --yosyspath )     shift
+                            YOSYS="$1"
                             ;;
     -d | --device )         shift
                             dev="$1"
@@ -63,13 +67,12 @@ case "${dev}" in
   xcvu440) xl_device="xcvu440-flga2892-${grade}-i" ;; # needs license
 esac
 
-YOSYS=${YOSYS:-/home/arya/src/yosys/yosys}
 if [[ "${synth}" == *"yosys"* ]] && [ ! -x "${YOSYS}" ]; then
   echo "yosys required for synth but executable not usable: ${YOSYS}"
   exit 10
 fi
 
-VIVADO=${VIVADO:-/opt/Xilinx/Vivado/2020.1/bin/vivado}
+VIVADO=${VIVADO:-/tools/xilinx/Vivado/2022.1/bin/vivado}
 if [[ "${synth}" == *"vivado"* ]] && [ ! -x "${VIVADO}" ]; then
   echo "vivado required for synth but executable not usable: ${VIVADO}"
   exit 11
@@ -81,8 +84,8 @@ fi
 # echo "ip=${ip}"
 # echo "path=${path}"
 # echo "clean=${clean}"
-# echo "xl_device=${xl_device}"
-# echo "YOSYS=${YOSYS}"
+echo "xl_device=${xl_device}"
+echo "YOSYS=${YOSYS}"
 # echo "VIVADO=${VIVADO}"
 
 test_name="tab_${synth}_${ip}_${dev}_${grade}"
@@ -105,7 +108,7 @@ synth_case() {
 
   cat > test_${1}.tcl <<EOT
 # generated at $(date)
-set_param general.maxThreads 1
+set_param general.maxThreads 2
 set_property IS_ENABLED 0 [get_drc_checks {PDRC-43}]
 EOT
 
@@ -143,6 +146,7 @@ opt_design -directive Explore
 EOT
 
   else
+    sha256sum ${YOSYS} >>  ${pwd}/yosys-version.txt
     edif="${ip}.edif"
     synth_with_abc9=
     if [ "${synth}" = "yosys-abc9" ]; then
@@ -157,7 +161,8 @@ EOT
           echo "read -vhdl $(basename ${path})" > ${ip}.ys
       else
           #echo "read_verilog $(basename ${path})" > ${ip}.ys
-          echo "read_verilog -nomem2reg ${path}" > ${ip}.ys
+	  # -nomem2reg 
+          echo "read_verilog -yydebug ${path}" > ${ip}.ys
       fi
 
       # If the top is specified in a .top file, specify that to Yosys so that
@@ -167,7 +172,7 @@ EOT
       if [ -f "${top_file}" ]; then
         echo "hierarchy -check -top $(<${top_file})" >> ${ip}.ys
       fi
-
+      # -family xcu 
       cat >> ${ip}.ys <<EOT
 synth_xilinx -dff -flatten -noiopad ${synth_with_abc9} -edif ${edif}
 write_verilog -noexpr -norename ${pwd}/${ip}_syn.v
@@ -175,6 +180,7 @@ EOT
 
       echo "${test_name} running ${ip}.ys..."
       #pushd $(dirname ${path}) > /dev/null
+      echo "${YOSYS} -l ${pwd}/yosys.log ${pwd}/${ip}.ys"
       if ! ${YOSYS} -l ${pwd}/yosys.log ${pwd}/${ip}.ys > /dev/null 2>&1; then
         cat ${pwd}/yosys.log
         exit 1
