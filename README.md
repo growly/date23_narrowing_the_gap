@@ -12,11 +12,31 @@ https://github.com/benlcb/yosys-fpga-benchmarks
 
 ### Vivado
 
-If you have access to Vivado, you may use the other scripts in /scripts/ to run Vivado and perform design analysis. 
+#### Installing Vivado
+
+As of June 2025, installing Vivado on Debian trixie (13, testing) fails silently
+because of an undeclared dependency on the `libtinfo5` package. `libtinfo5` is
+old enough to not be available in the trixie `apt` repositories, so you have to
+manually add the bookwork (Debian 12) repositories and install it from there.
+
+I had the same issue on Ubuntu 24.04 and Ubuntu 22.04.
+
+#### Running all benchmarks
+
+If you have access to Vivado, you may use the other scripts in `scripts/` to run Vivado and perform design analysis. 
 `vivado_run_all.sh` will attempt to run design synthesis of multiple designs in parallel using LSF. 
 `vivado_yosys.sh` performs the binary search on a design over different clock delay targets. 
 
-Resulst can then be collected like this: 
+For example, to use vivado for synthesis and target the xcvu57p-fsvk2892-1-e
+chip:
+
+```
+export VIVADO=/opt/Xilinx/2025.1/Vivado/bin/vivado  # your path here
+scripts/vivado_run_all.sh -i design_files/mcnc91 -m vivado -d xcvu57p-fsvk2892-1-e
+```
+
+This will put all results in the `runs/` subdirectory. Results can then be collected like this: 
+
 ```
 scripts/collect_results.py --from_dir runs
 ```

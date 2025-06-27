@@ -65,6 +65,7 @@ case "${dev}" in
   xckup) xl_device="" ;;
   xcvu2892) xl_device="xcvu35p-fsvh2892-${grade}-e" ;; # needs license
   xcvu440) xl_device="xcvu440-flga2892-${grade}-i" ;; # needs license
+  *) xl_device="${dev}" ;; # use given device verbatim
 esac
 
 if [[ "${synth}" == *"yosys"* ]] && [ ! -x "${YOSYS}" ]; then
@@ -230,6 +231,7 @@ report_clocks
 report_design_analysis
 report_power
 report_io
+write_checkpoint -force checkpoint_${1}.dcp
 EOT
 
   echo "${test_name} running test_${1}..."
